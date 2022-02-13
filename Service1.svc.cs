@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
@@ -16,7 +14,7 @@ namespace TFTService
     {
         readonly Dictionary<string, string> numberSet = new Dictionary<string, string>();
         private string prevNumberInserted = "";
-
+        private int maxNumberLength = 0;
         public string errorLog(string error)
         {
             string errorFile = @"D:\home\site\storage\tft-data\error.log";
@@ -78,9 +76,20 @@ namespace TFTService
             bool isMinusInserted = false;
             for (int i = 0; i < vs.Length; i++)
             {
+                string fullNumberName = vs[i];
                 vs[i] = removePluralsAndFeminineTypes(vs[i]);
                 if (numberSet.ContainsKey(vs[i]))
                 {
+                    if (prevNumberInserted.Length >= 6 && numberSet[vs[i]].Length >= 6 && !numberSet[vs[i]].Contains("/"))
+                    {
+                        return "Número inválido: No se puede introducir un número mayor que un millón seguido de otro mayor que un millón. Número erróneo: " + fullNumberName;
+                    } else if (maxNumberLength != 0 && numberSet[vs[i]].Length >= 6 && numberSet[vs[i]].Length >= maxNumberLength && !numberSet[vs[i]].Contains("/"))
+                    {
+                        return "Número inválido: No se puede poner un número con una unidad mayor detrás de otro con una unidad menor. Número erróneo: " + fullNumberName;
+                    } else if (numberSet[vs[i]].Length >= 6 && !numberSet[vs[i]].Contains("/"))
+                    {
+                        maxNumberLength = numberSet[vs[i]].Length;
+                    }
                     finalResult = JoinNumbersInString(finalResult, numberSet[vs[i]]);
                 }
                 else
@@ -100,7 +109,12 @@ namespace TFTService
                     }
                     if (vs[i] == "y")
                     {
-                        if (prevNumberInserted.Length == 2)
+                        if (prevNumberInserted.Length == 2 && 
+                            (
+                                prevNumberInserted.ToCharArray()[0] != '2' && 
+                                (i+1 < vs.Length && numberSet.ContainsKey(vs[i+1]) && numberSet[vs[i+1]].Length != 2)
+                            )
+                        )
                         {
                             // see if there are any suffixes beyond the next number to insert
                             if (i + 2 >= vs.Length) continue;
@@ -154,6 +168,10 @@ namespace TFTService
                                 }
                                 else break;
                             }
+                        }
+                        if (!input.Contains("ésima"))
+                        {
+                            addedDecimal = true;
                         }
                         if (addedDecimal)
                         {
