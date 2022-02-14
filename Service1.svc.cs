@@ -15,6 +15,7 @@ namespace TFTService
         readonly Dictionary<string, string> numberSet = new Dictionary<string, string>();
         private string prevNumberInserted = "";
         private int maxNumberLength = 0;
+        private bool isThousandInserted = false;
         public string errorLog(string error)
         {
             string errorFile = @"D:\home\site\storage\tft-data\error.log";
@@ -36,8 +37,8 @@ namespace TFTService
 
         private bool LoadNumbers()
         {
-            string numberFilePath = @"D:\home\site\storage\tft-data\numbers.txt";
-            // string numberFilePath = @"C:\Users\Alexandru\Desktop\tfg\numbers.txt";
+            // string numberFilePath = @"D:\home\site\storage\tft-data\numbers.txt";
+            string numberFilePath = @"C:\Users\Alexandru\Desktop\tfg\numbers.txt";
             if (File.Exists(numberFilePath))
             {
                 using (StreamReader sr = new StreamReader(numberFilePath))
@@ -80,6 +81,13 @@ namespace TFTService
                 vs[i] = removePluralsAndFeminineTypes(vs[i]);
                 if (numberSet.ContainsKey(vs[i]))
                 {
+                    if (isThousandInserted && numberSet[vs[i]] == "1000")
+                    {
+                        return "Número inválido: No se puede insertar dos veces el número 'mil' sin que haya ninguna unidad adicional insertada.";
+                    } else if (numberSet[vs[i]] == "1000")
+                    {
+                        isThousandInserted = true;
+                    }
                     if (prevNumberInserted.Length >= 6 && numberSet[vs[i]].Length >= 6 && !numberSet[vs[i]].Contains("/"))
                     {
                         return "Número inválido: No se puede introducir un número mayor que un millón seguido de otro mayor que un millón. Número erróneo: " + fullNumberName;
@@ -88,6 +96,7 @@ namespace TFTService
                         return "Número inválido: No se puede poner un número con una unidad mayor detrás de otro con una unidad menor. Número erróneo: " + fullNumberName;
                     } else if (numberSet[vs[i]].Length >= 6 && !numberSet[vs[i]].Contains("/"))
                     {
+                        isThousandInserted = false;
                         maxNumberLength = numberSet[vs[i]].Length;
                     }
                     finalResult = JoinNumbersInString(finalResult, numberSet[vs[i]]);
@@ -135,9 +144,12 @@ namespace TFTService
                     {
                         string decimalResult = "";
                         prevNumberInserted = "";
+                        maxNumberLength = 0;
+                        isThousandInserted = false;
                         bool addedDecimal = false;
                         for (int j = i + 1; j < vs.Length; j++)
                         {
+                            fullNumberName = vs[j];
                             if (vs[j].Contains("écimo") || vs[j].Contains("ésimo"))
                             {
                                 return "Error: Número inválido";
@@ -148,6 +160,27 @@ namespace TFTService
                             }
                             if (numberSet.ContainsKey(vs[j]) && !vs[j].Contains("ésima") && !vs[j].Contains("écima") && !(numberSet[vs[j]].Contains("/")))
                             {
+                                if (isThousandInserted && numberSet[vs[j]] == "1000")
+                                {
+                                    return "Número inválido: No se puede insertar dos veces el número 'mil' sin que haya ninguna unidad adicional insertada.";
+                                }
+                                else if (numberSet[vs[j]] == "1000")
+                                {
+                                    isThousandInserted = true;
+                                }
+                                if (prevNumberInserted.Length >= 6 && numberSet[vs[j]].Length >= 6 && !numberSet[vs[j]].Contains("/"))
+                                {
+                                    return "Número inválido: No se puede introducir un número mayor que un millón seguido de otro mayor que un millón. Número erróneo: " + fullNumberName;
+                                }
+                                else if (maxNumberLength != 0 && numberSet[vs[j]].Length >= 6 && numberSet[vs[j]].Length >= maxNumberLength && !numberSet[vs[j]].Contains("/"))
+                                {
+                                    return "Número inválido: No se puede poner un número con una unidad mayor detrás de otro con una unidad menor. Número erróneo: " + fullNumberName;
+                                }
+                                else if (numberSet[vs[j]].Length >= 6 && !numberSet[vs[j]].Contains("/"))
+                                {
+                                    isThousandInserted = false;
+                                    maxNumberLength = numberSet[vs[j]].Length;
+                                }
                                 decimalResult = JoinNumbersInString(decimalResult, numberSet[vs[j]]);
                             }
                             else
@@ -182,6 +215,8 @@ namespace TFTService
                     }
                     if (vs[i].Contains("avo") || vs[i].Contains("ava") || vs[i].Contains("ésimo") || vs[i].Contains("ésima"))
                     {
+                        isThousandInserted = false;
+                        maxNumberLength = 0;
                         finalResult = finalResult.Trim();
                         string numbers = ComputeFractionNumbers(vs[i]);
                         finalResult += "/" + ComputeNumber(numbers);
