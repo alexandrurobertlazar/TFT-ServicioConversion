@@ -111,8 +111,7 @@ namespace TFTService
                     {
                         if (prevNumberInserted.Length == 2 && 
                             (
-                                prevNumberInserted.ToCharArray()[0] != '2' && 
-                                (i+1 < vs.Length && numberSet.ContainsKey(vs[i+1]) && numberSet[vs[i+1]].Length != 2)
+                                i+1 < vs.Length && numberSet.ContainsKey(vs[i+1]) && numberSet[vs[i+1]].Length != 2
                             )
                         )
                         {
