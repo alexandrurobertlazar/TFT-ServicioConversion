@@ -37,8 +37,8 @@ namespace TFTService
 
         private bool LoadNumbers()
         {
-            // string numberFilePath = @"D:\home\site\storage\tft-data\numbers.txt";
-            string numberFilePath = @"C:\Users\Alexandru\Desktop\tfg\numbers.txt";
+            string numberFilePath = @"D:\home\site\storage\tft-data\numbers.txt";
+            // string numberFilePath = @"C:\Users\Alexandru\Desktop\tfg\numbers.txt";
             if (File.Exists(numberFilePath))
             {
                 using (StreamReader sr = new StreamReader(numberFilePath))
@@ -189,6 +189,7 @@ namespace TFTService
                                 if (vs[j].Contains("ésima") || vs[j].Contains("écima"))
                                 {
                                     int nShifts = ComputeDecimalShifts(vs[j]);
+                                    if (nShifts == -1) return "Error: No se pudo calcular el número " + vs[j] + ". Verifíquelo y vuelva a intentarlo";
                                     if (decimalResult.Length > nShifts)
                                     {
                                         return "Error: Número inválido. Motivo: Se solicitó un número con más cifras que unidades decimales (cifras: " + decimalResult.Length + "; unidades decimales: " +
@@ -272,6 +273,7 @@ namespace TFTService
          */
         private string ComputeFractionNumbers(string numbers)
         {
+            isThousandInserted = false;
             List<string> resultNumbers = new List<string>();
             if (numbers.Contains("tavo") || numbers.Contains("tava"))
             {
@@ -366,6 +368,10 @@ namespace TFTService
                 // last number
                 fractionNumber = ComputeFractionNumbers(originalNumber);
                 fractionNumber = ComputeNumber(fractionNumber).Replace(" ", String.Empty);
+            }
+            if (fractionNumber.Contains("Error") || fractionNumber.Contains("inválido"))
+            {
+                return -1;
             }
 
             return fractionNumber.Length - 1;
