@@ -208,7 +208,7 @@ namespace TFTService
                         }
                         if (addedDecimal)
                         {
-                            finalResult += "." + decimalResult;
+                            finalResult += "," + decimalResult;
                             break;
                         }
                         continue;
