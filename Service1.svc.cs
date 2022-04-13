@@ -38,7 +38,6 @@ namespace TFTService
         private bool LoadNumbers()
         {
             string numberFilePath = @"D:\home\site\storage\tft-data\numbers.txt";
-            // string numberFilePath = @"C:\Users\Alexandru\Desktop\tfg\numbers.txt";
             if (File.Exists(numberFilePath))
             {
                 using (StreamReader sr = new StreamReader(numberFilePath))
@@ -55,7 +54,6 @@ namespace TFTService
             else
             {
                 return false;
-                // throw new Exception("Fichero de números no encontrado.");
             }
         }
         /**
