@@ -208,7 +208,7 @@ namespace TFTService
                         }
                         if (addedDecimal)
                         {
-                            finalResult += "." + decimalResult;
+                            finalResult += "," + decimalResult;
                             break;
                         }
                         continue;
@@ -226,7 +226,7 @@ namespace TFTService
                 }
             }
             // Separate cardinals.
-            string[] parts = finalResult.Split('.');
+            string[] parts = finalResult.Split(',');
             string[] fractionParts = finalResult.Split('/');
             if (fractionParts.Length > 1 && parts.Length > 1) return "Error: Número inválido";
             if (fractionParts.Length > 1)
@@ -238,7 +238,7 @@ namespace TFTService
             finalResult = SeparateNumbers(parts[0], "left").Trim();
             if (parts.Length > 1)
             {
-                finalResult += "." + SeparateNumbers(parts[1], "right").Trim();
+                finalResult += "," + SeparateNumbers(parts[1], "right").Trim();
             }
             if (finalResult[0] == '/')
             {
