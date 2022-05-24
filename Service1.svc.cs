@@ -111,7 +111,6 @@ namespace TFTService
                         else
                         {
                             return "Error: Número inválido (no puede aparecer más de una vez la palabra \"menos\"";
-                            // throw new Exception("Error: Número inválido (no puede aparecer más de una vez la palabra \"menos\"");
                         }
                     }
                     if (vs[i] == "y")
@@ -123,7 +122,7 @@ namespace TFTService
                         )
                         {
                             // see if there are any suffixes beyond the next number to insert
-                            if (i + 2 >= vs.Length) continue;
+                            if (i + 2 >= vs.Length || numberSet[vs[i + 1]].Length == 1) continue;
                             // check the rest of the array for "y" or for fractions.
                             bool charFound = false;
                             for (int j = i + 2; j < vs.Length; j++)
@@ -294,40 +293,106 @@ namespace TFTService
                 numbers = numbers.Replace("avo", String.Empty);
                 numbers = numbers.Replace("ava", String.Empty);
             }
-            int lastPos = numbers.Length;
-            for (int i = numbers.Length - 1; i >= 0; i--)
+            int lastPos = 0;
+            for (int i = 0; i < numbers.Length; i++)
             {
-                string partNumber = numbers.Substring(i, lastPos - i);
+                string partNumber = numbers.Substring(lastPos, i + 1 - lastPos);
+                bool añadidoAnticipado = false;
                 switch (partNumber)
                 {
                     case "i":
-                        lastPos = i;
+                        lastPos = i+1;
                         break;
                     case "veint":
                         partNumber = "veinte";
                         break;
+                    case "e":
+                        if (resultNumbers[resultNumbers.Count - 1] == "veinte")
+                        {
+                            lastPos++;
+                        }
+                        break;
                     case "diec":
                         partNumber = "diez";
                         break;
-                    case "cient":
-                        partNumber = "ciento";
+                    case "t":
+                        if (i + 8 < numbers.Length && numbers.Substring(i + 1, 7) == "ochenta" && resultNumbers[resultNumbers.Count-1] == "cien")
+                        {
+                            resultNumbers[resultNumbers.Count - 1] += "to";
+                            lastPos = i + 1;
+                        }
+                        break;
+                    case "to":
+                        if (resultNumbers[resultNumbers.Count - 1] == "cien")
+                        {
+                            resultNumbers[resultNumbers.Count - 1] += "to";
+                            lastPos = lastPos+2;
+                            añadidoAnticipado = true;
+                        }
                         break;
                     case "cent":
                         partNumber = "ciento";
                         break;
+                    case "es":
+                        if (resultNumbers[resultNumbers.Count-1].Contains("llón"))
+                        {
+                            lastPos = i + 1;
+                        }
+                        break;
+                    case "s":
+                        if (resultNumbers[resultNumbers.Count - 1].Contains("ciento"))
+                        {
+                            if (!(7 <= numbers.Substring(i).Length && (numbers.Substring(i, 7) == "sesenta" || numbers.Substring(i, 7) == "setenta")) && numberSet[resultNumbers[resultNumbers.Count - 1]].Length != 1) {
+                                lastPos+=1;
+                            }
+                        }
+                        break;
+                    case "mil":
+                        if (i-2 > 0 && 6 <= numbers.Substring(i-2).Length && numbers.Substring(i-2, 6).Contains("millon"))
+                        {
+                            i += 4;
+                            lastPos = i;
+                            partNumber = "millón";
+                            resultNumbers.Add(partNumber);
+                            añadidoAnticipado = true;
+                        }
+                        break;
                 }
+                if (añadidoAnticipado) continue;
                 if (partNumber.Contains("llon") && !partNumber.Contains("llones"))
                 {
                     partNumber = partNumber.Replace("llon", "llón");
                 }
+                partNumber = removePluralsAndFeminineTypes(partNumber);
                 if (numberSet.ContainsKey(partNumber))
                 {
-                    lastPos = i;
+                    lastPos = i+1;
                     resultNumbers.Add(partNumber);
                 }
             }
-            resultNumbers.Reverse();
-            return string.Join(" ", resultNumbers);
+            return string.Join(" ", treatResultNumbers(resultNumbers));
+        }
+
+        private List<string> treatResultNumbers(List<string> resultNumbers)
+        {
+            List<string> result = new List<string>();
+            result.Add(resultNumbers[0]);
+            string lastNum = resultNumbers[0];
+            int removeIndex = 1;
+            for (int i = 1; i < resultNumbers.Count; i++)
+            {
+                if (numberSet[lastNum].Length == 1 && numberSet[resultNumbers[i]].Length == 3)
+                {
+                    result.Add(lastNum + resultNumbers[i] + "s");
+                    result.RemoveAt(i - removeIndex);
+                    removeIndex++;
+                } else
+                {
+                    result.Add(resultNumbers[i]);
+                }
+                lastNum = resultNumbers[i];
+            }
+            return result;
         }
         /**
          * 
@@ -365,7 +430,16 @@ namespace TFTService
             {
                 // last number
                 fractionNumber = ComputeFractionNumbers(originalNumber);
+                string origPrevNumberInserted = prevNumberInserted;
+                int origMaxNumberLength = maxNumberLength;
+                bool origIsThousandInserted = isThousandInserted;
+                prevNumberInserted = "";
+                maxNumberLength = 0;
+                isThousandInserted = false;
                 fractionNumber = ComputeNumber(fractionNumber).Replace(" ", String.Empty);
+                prevNumberInserted = origPrevNumberInserted;
+                maxNumberLength = origMaxNumberLength;
+                isThousandInserted = origIsThousandInserted;
             }
             if (fractionNumber.Contains("Error") || fractionNumber.Contains("inválido"))
             {
@@ -383,6 +457,7 @@ namespace TFTService
          */
         private string SeparateNumbers(string str, string orientation)
         {
+            if (str.Length <= 4) return str;
             if (orientation == "left")
             {
                 str = ReverseString(str);
