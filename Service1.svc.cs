@@ -69,7 +69,14 @@ namespace TFTService
              * initialize service
              *
              */
-            if (this.numberSet.Count == 0) this.LoadNumbers();
+            if (this.numberSet.Count == 0)
+            {
+                bool areNumbersLoaded = this.LoadNumbers();
+                if (!areNumbersLoaded)
+                {
+                    return "Error: No se han podido cargar correctamente los números.";
+                }
+            }
             string[] vs = input.Split(' ');
             string finalResult = "";
             bool isMinusInserted = false;
@@ -113,28 +120,24 @@ namespace TFTService
                             return "Error: Número inválido (no puede aparecer más de una vez la palabra \"menos\"";
                         }
                     }
-                    if (vs[i] == "y")
-                    {
-                        if (prevNumberInserted.Length == 2 && 
+                    if (vs[i] == "y" && prevNumberInserted.Length == 2 &&
                             (
-                                i+1 < vs.Length && numberSet.ContainsKey(vs[i+1]) && numberSet[vs[i+1]].Length != 2
-                            )
-                        )
+                                i + 1 < vs.Length && numberSet.ContainsKey(vs[i + 1]) && numberSet[vs[i + 1]].Length != 2
+                            ))
+                    {
+                        // see if there are any suffixes beyond the next number to insert
+                        if (i + 2 >= vs.Length || numberSet[vs[i + 1]].Length == 1) continue;
+                        // check the rest of the array for "y" or for fractions.
+                        bool charFound = false;
+                        for (int j = i + 2; j < vs.Length; j++)
                         {
-                            // see if there are any suffixes beyond the next number to insert
-                            if (i + 2 >= vs.Length || numberSet[vs[i + 1]].Length == 1) continue;
-                            // check the rest of the array for "y" or for fractions.
-                            bool charFound = false;
-                            for (int j = i + 2; j < vs.Length; j++)
+                            if (vs[j] == "y" || vs[j].Contains("avo"))
                             {
-                                if (vs[j] == "y" || vs[j].Contains("avo"))
-                                {
-                                    charFound = true;
-                                    break;
-                                }
+                                charFound = true;
+                                break;
                             }
-                            if (charFound) continue;
                         }
+                        if (charFound) continue;
                     };
                     if (vs[i] == "con" || vs[i] == "coma" || vs[i] == "y")
                     {
@@ -340,11 +343,11 @@ namespace TFTService
                         }
                         break;
                     case "s":
-                        if (resultNumbers[resultNumbers.Count - 1].Contains("ciento"))
+                        if (resultNumbers[resultNumbers.Count - 1].Contains("ciento") &&
+                            !(7 <= numbers.Substring(i).Length && (numbers.Substring(i, 7) == "sesenta" || numbers.Substring(i, 7) == "setenta")) && 
+                            numberSet[resultNumbers[resultNumbers.Count - 1]].Length != 1)
                         {
-                            if (!(7 <= numbers.Substring(i).Length && (numbers.Substring(i, 7) == "sesenta" || numbers.Substring(i, 7) == "setenta")) && numberSet[resultNumbers[resultNumbers.Count - 1]].Length != 1) {
                                 lastPos+=1;
-                            }
                         }
                         break;
                     case "mil":
